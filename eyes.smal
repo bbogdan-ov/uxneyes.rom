@@ -33,9 +33,9 @@ const short SCREEN_HEIGHT { 222* }
 var short elapsed
 
 fun on-reset ( -> ) {
-	0xe18c* System.red   output
-	0xe18c* System.green output
-	0xe1fc* System.blue  output
+	0xe2e2* System.red   output
+	0xe2e2* System.green output
+	0xe2e2* System.blue  output
 
 	SCREEN_WIDTH  Screen.width  output
 	SCREEN_HEIGHT Screen.height output
@@ -58,7 +58,7 @@ fun on-screen ( -> ) {
 	Mouse.y input2 Screen.y output
 	&sprite-cursor Screen.addr output
 	0 Screen.auto output
-	0b00001010 Screen.sprite output
+	0b10000101 Screen.sprite output
 }
 
 fun draw ( -- ) {
@@ -238,14 +238,23 @@ fun mod2 ( short:num short:divisor -- short:remainder ) { div-k mul sub : (remai
 // ==============================
 
 data sprite-cursor {
-	0b10000000
-	0b11000000
+	0b00000000
+	0b01000000
+	0b01100000
+	0b01110000
+	0b01111000
+	0b01111100
+	0b01110000
+	0b00000000
+
 	0b11100000
 	0b11110000
 	0b11111000
-	0b11100000
-	0b00010000
-	0b00000000
+	0b11111100
+	0b11111110
+	0b11111110
+	0b11111110
+	0b11111000
 }
 
 const short EYE_WIDTH        { 56* }
