@@ -11,6 +11,7 @@ PALETTE="
 	-c3 #cccccc \
 "
 
+# https://github.com/bbogdan-ov/a2uxn
 a2uxn $PALETTE chr ../etc/eye-1.png
 a2uxn $PALETTE chr ../etc/eye-2.png
 a2uxn $PALETTE chr ../etc/eye-3.png
