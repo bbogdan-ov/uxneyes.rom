@@ -29,20 +29,23 @@ alias enum byte Mouse {
 const short SCREEN_WIDTH  { 222* }
 const short SCREEN_HEIGHT { 222* }
 
+// Frames elapsed from the start
+var short elapsed
+
 fun on-reset ( -> ) {
-	0xe15c* System.red   output
-	0xe15c* System.green output
-	0xe15c* System.blue  output
+	0xe18c* System.red   output
+	0xe18c* System.green output
+	0xe1fc* System.blue  output
 
 	SCREEN_WIDTH  Screen.width  output
 	SCREEN_HEIGHT Screen.height output
 
-	&on-mouse Mouse.vector output
+	&on-screen Screen.vector output
 
 	draw
 }
 
-fun on-mouse ( -> ) {
+fun on-screen ( -> ) {
 	// Clear the screen
 	0* Screen.x output
 	0* Screen.y output
@@ -62,6 +65,8 @@ fun draw ( -- ) {
 	&sprite-eye-2 &sprite-pupil-2 45* 35*  draw-eye
 	&sprite-eye-1 &sprite-pupil-1 130* 80* draw-eye
 	&sprite-eye-3 &sprite-pupil-1 70* 145* draw-eye
+
+	elapsed inc -> elapsed
 }
 
 fun draw-eye ( *[]byte:eye-sprite *[]byte:pupil-sprite short:x short:y -- ) {
@@ -100,9 +105,26 @@ fun draw-eye ( *[]byte:eye-sprite *[]byte:pupil-sprite short:x short:y -- ) {
 		output
 
 	// Draw the eye
+	{
+		// Use sprite address as an offset for the blinking animation
+		(eye-sprite) dup as (short) elapsed add
+		200* mod2 : (t)
+
+		(t) dup 175* gth if {
+			{ (t) 175* sub 5* div } EYE_FRAMES mod2 : (frame)
+
+			/**/ (frame) dup 3* eq if { pop 1* : (frame) }
+			elif (frame) dup 4* eq    { pop 0* : (frame) }
+
+			(frame) EYE_FRAME_STRIDE mul : (offset)
+			(eye-sprite offset) add
+		} else {
+			(t) pop (eye-sprite) : (_)
+		}
+	} Screen.addr output
+
 	sth-r (y) Screen.y output
 	sth-r (x) Screen.x output
-	(eye-sprite) Screen.addr output
 	0b01100110 Screen.auto output
 	0b10000000 Screen.sprite
 		output-k
@@ -209,6 +231,8 @@ fun max2 ( short:a short:b -- short ) {
 	else { nip (b) : (_) }
 }
 
+fun mod2 ( short:num short:divisor -- short:remainder ) { div-k mul sub : (remainder) }
+
 // ==============================
 // Assets
 // ==============================
@@ -224,8 +248,10 @@ data sprite-cursor {
 	0b00000000
 }
 
-const short EYE_WIDTH  { 56* }
-const short EYE_HEIGHT { 48* }
+const short EYE_WIDTH        { 56* }
+const short EYE_HEIGHT       { 48* }
+const short EYE_FRAME_STRIDE { 672* }
+const short EYE_FRAMES       { 5* }
 
 const short PUPIL_WIDTH  { 32* }
 const short PUPIL_HEIGHT { 28* }
