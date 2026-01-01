@@ -1,0 +1,237 @@
+alias enum byte System {
+	red   { 0x08 }
+	green { 0x0a }
+	blue  { 0x0c }
+	debug { 0x0e }
+}
+
+alias enum byte Screen {
+	vector { 0x20 }
+	width  { 0x22 }
+	height { 0x24 }
+	auto   { 0x26 }
+	x      { 0x28 }
+	y      { 0x2a }
+	addr   { 0x2c }
+	pixel  { 0x2e }
+	sprite { 0x2f }
+}
+
+alias enum byte Mouse {
+	vector  { 0x90 }
+	x       { 0x92 }
+	y       { 0x94 }
+	state   { 0x96 }
+	scrollx { 0x9a }
+	scrolly { 0x9c }
+}
+
+const short SCREEN_WIDTH  { 222* }
+const short SCREEN_HEIGHT { 222* }
+
+fun on-reset ( -> ) {
+	0xe15c* System.red   output
+	0xe15c* System.green output
+	0xe15c* System.blue  output
+
+	SCREEN_WIDTH  Screen.width  output
+	SCREEN_HEIGHT Screen.height output
+
+	&on-mouse Mouse.vector output
+
+	draw
+}
+
+fun on-mouse ( -> ) {
+	// Clear the screen
+	0* Screen.x output
+	0* Screen.y output
+	0b10000000 Screen.pixel output
+
+	draw
+
+	// Draw mouse cursor
+	Mouse.x input2 Screen.x output
+	Mouse.y input2 Screen.y output
+	&sprite-cursor Screen.addr output
+	0 Screen.auto output
+	0b00001010 Screen.sprite output
+}
+
+fun draw ( -- ) {
+	&sprite-eye-2 &sprite-pupil-2 45* 35*  draw-eye
+	&sprite-eye-1 &sprite-pupil-1 130* 80* draw-eye
+	&sprite-eye-3 &sprite-pupil-1 70* 145* draw-eye
+}
+
+fun draw-eye ( *[]byte:eye-sprite *[]byte:pupil-sprite short:x short:y -- ) {
+	(y) sth (x) sth
+
+	// Calculate pupil offset
+	{
+		Mouse.y input2 { EYE_HEIGHT 2* div } sub : (my)
+		swap-r sth-rk (my y) sub
+	} : (oy)
+	{
+		Mouse.x input2 { EYE_WIDTH 2* div } sub : (mx)
+		swap-r sth-rk (mx x) sub
+	} : (ox)
+
+	swap (ox oy)
+
+	over over (ox oy) vec-magnitude : (mag)
+	(mag) 4* div 0* 9* clamp : (mag) sth
+
+	(ox oy) vec-normalize : (nx ny)
+	/**/ sth-rk (ny mag) mul 100* sdiv : (ny)
+	swap sth-r  (nx mag) mul 100* sdiv : (nx)
+
+	// Place the pupil
+	(nx)        sth-rk (x) add 11* add Screen.x output
+	(ny) swap-r sth-rk (y) add 9*  add Screen.y output
+
+	// Draw the pupil
+	(pupil-sprite) Screen.addr output
+	0b00110110 Screen.auto output
+	0b00000001 Screen.sprite
+		output-k
+		output-k
+		output-k
+		output
+
+	// Draw the eye
+	sth-r (y) Screen.y output
+	sth-r (x) Screen.x output
+	(eye-sprite) Screen.addr output
+	0b01100110 Screen.auto output
+	0b10000000 Screen.sprite
+		output-k
+		output-k
+		output-k
+		output-k
+		output-k
+		output
+}
+
+// ==============================
+// Utils
+// ==============================
+
+// Signed division
+fun sdiv ( short:a short:b -- short:result ) {
+	// Abs `b`
+	dup (b) 0x8000* and : (b-sign)
+	(b-sign) dup as (byte byte) or
+	if   { /* negative */ swap (b) 0xffff* xor 1* add : (b) }
+	else { /* positive */ swap (b) }
+
+	// Abs `a`
+	rot dup (a) 0x8000* and : (a-sign)
+	(a-sign) dup as (byte byte) or
+	if   { /* negative */ swap (a) 0xffff* xor 1* add : (a) }
+	else { /* positive */ swap (a) }
+
+	// Divide unsigned `a` and `b`
+	rot (a b) div : (x) sth
+	// Calculate sign of the resulting number
+	(b-sign a-sign) or : (sign)
+
+	(sign) as (byte byte) or
+	if   { /* negative */ sth-r (x) 0xffff* xor 1* add : (result) }
+	else { /* positive */ sth-r (x) : (result) }
+}
+
+// Thanks to https://stackoverflow.com/a/34187992
+fun sqrt ( short:v -- short:result ) {
+	// Avoid division by 0
+	(v) dup 2* lth if { (v) : (result) return }
+
+	1255* : (a) sth
+
+	// TODO: would be cool if UXNSMAL had any way to copy code N times...
+	(v) dup sth-rk (v a) div : (b)
+	sth-r (b a) add 2* div : (a) sth
+
+	(v) dup sth-rk (v a) div : (b)
+	sth-r (b a) add 2* div : (a) sth
+
+	(v) dup sth-rk (v a) div : (b)
+	sth-r (b a) add 2* div : (a) sth
+
+	(v) dup sth-rk (v a) div : (b)
+	sth-r (b a) add 2* div : (a) sth
+
+	(v) dup sth-rk (v a) div : (b)
+	sth-r (b a) add 2* div : (a) sth
+
+	(v) dup sth-rk (v a) div : (b)
+	sth-r (b a) add 2* div : (a) sth
+
+	(v) dup sth-rk (v a) div : (b)
+	sth-r (b a) add 2* div : (a) sth
+
+	(v) dup sth-rk (v a) div : (b)
+	sth-r (b a) add 2* div : (a) sth
+
+	(v) dup sth-rk (v a) div : (b)
+	sth-r (b a) add 2* div : (a) sth
+
+	(v) pop
+	sth-r (a) : (result)
+}
+
+fun vec-magnitude ( short:x short:y -- short:mag ) {
+	/**/ (y) dup mul : (yy)
+	swap (x) dup mul : (xx)
+	(yy xx) add sqrt : (mag)
+}
+
+// Normalizes vector in range 0-100
+fun vec-normalize ( short:x short:y -- short:nx short:ny ) {
+	over over (x y) vec-magnitude : (mag) sth
+	/**/ (y) 100* mul sth-rk (_ mag) sdiv : (ny)
+	swap (x) 100* mul sth-r  (_ mag) sdiv : (nx)
+	swap
+}
+
+fun clamp ( short:value short:min short:max -- short ) {
+	rot (max value) min2 (min _) max2
+}
+
+fun min2 ( short:a short:b -- short ) {
+	gth-k
+	if   { nip (b) : (_) }
+	else { pop (a) : (_) }
+}
+fun max2 ( short:a short:b -- short ) {
+	gth-k
+	if   { pop (a) : (_) }
+	else { nip (b) : (_) }
+}
+
+// ==============================
+// Assets
+// ==============================
+
+data sprite-cursor {
+	0b10000000
+	0b11000000
+	0b11100000
+	0b11110000
+	0b11111000
+	0b11100000
+	0b00010000
+	0b00000000
+}
+
+const short EYE_WIDTH  { 56* }
+const short EYE_HEIGHT { 48* }
+
+const short PUPIL_WIDTH  { 32* }
+const short PUPIL_HEIGHT { 28* }
+
+data sprite-eye-1   { include "assets/eye-1.chr" }
+data sprite-eye-2   { include "assets/eye-2.chr" }
+data sprite-eye-3   { include "assets/eye-3.chr" }
+data sprite-pupil-1 { include "assets/pupil-1.icn" }
+data sprite-pupil-2 { include "assets/pupil-2.icn" }
