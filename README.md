@@ -18,6 +18,8 @@ If you don't have one, you can use [the web emulator](https://rabbits.srht.site/
 
 To build UXNEYES.rom first clone and compile [UXNSMAL] compiler.
 
+[UXNSMAL]: https://github.com/bbogdan-ov/uxnsmal
+
 ```sh
 uxnsmal eyes.smal
 uxnemu output.rom
