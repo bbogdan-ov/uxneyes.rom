@@ -41,8 +41,6 @@ fun on-reset ( -> ) {
 	SCREEN_HEIGHT Screen.height output
 
 	&on-screen Screen.vector output
-
-	draw
 }
 
 fun on-screen ( -> ) {
@@ -51,7 +49,9 @@ fun on-screen ( -> ) {
 	0* Screen.y output
 	0b10000000 Screen.pixel output
 
-	draw
+	&sprite-eye-2 &sprite-pupil-2 45* 35*  draw-eye
+	&sprite-eye-1 &sprite-pupil-1 130* 80* draw-eye
+	&sprite-eye-3 &sprite-pupil-1 70* 145* draw-eye
 
 	// Draw mouse cursor
 	Mouse.x input2 Screen.x output
@@ -59,12 +59,6 @@ fun on-screen ( -> ) {
 	&sprite-cursor Screen.addr output
 	0 Screen.auto output
 	0b10000101 Screen.sprite output
-}
-
-fun draw ( -- ) {
-	&sprite-eye-2 &sprite-pupil-2 45* 35*  draw-eye
-	&sprite-eye-1 &sprite-pupil-1 130* 80* draw-eye
-	&sprite-eye-3 &sprite-pupil-1 70* 145* draw-eye
 
 	elapsed inc -> elapsed
 }
