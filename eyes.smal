@@ -101,21 +101,25 @@ fun draw-eye ( *[]byte:eye-sprite *[]byte:pupil-sprite short:x short:y -- ) {
 	// Draw the eye
 	{
 		// Use sprite address as an offset for the blinking animation
-		(eye-sprite) dup as (short) elapsed add
-		200* mod2 : (t)
+		(eye-sprite) dup as (short) elapsed add : (t)
 
-		(t) dup 175* gth if {
-			{ (t) 175* sub 5* div } EYE_FRAMES mod2 : (frame)
+		// The eyes will blink every 180 game frames
+		(t) 200* mod2 : (t)
+		(t) dup 180* gth if {
+			// Calculate current animation frame
+			{ (t) 180* sub 5* div } EYE_FRAMES mod2 : (frame)
 
-			/**/ (frame) dup 3* eq if { pop 1* : (frame) }
-			elif (frame) dup 4* eq    { pop 0* : (frame) }
+			// Make animation ping-pong
+			(frame) dup 3* eq if { pop 1* : (frame) }
 
+			// Calculate the address offset
 			(frame) EYE_FRAME_STRIDE mul : (offset)
-			(eye-sprite offset) add
+			(eye-sprite offset) add : (addr)
 		} else {
-			(t) pop (eye-sprite) : (_)
+			// No animation is playing
+			(t) pop (eye-sprite) : (addr)
 		}
-	} Screen.addr output
+	} (addr) Screen.addr output
 
 	sth-r (y) Screen.y output
 	sth-r (x) Screen.x output
@@ -254,7 +258,7 @@ data sprite-cursor {
 const short EYE_WIDTH        { 56* }
 const short EYE_HEIGHT       { 48* }
 const short EYE_FRAME_STRIDE { 672* }
-const short EYE_FRAMES       { 5* }
+const short EYE_FRAMES       { 4* }
 
 const short PUPIL_WIDTH  { 32* }
 const short PUPIL_HEIGHT { 28* }
