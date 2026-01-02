@@ -68,11 +68,13 @@ fun draw-eye ( *[]byte:eye-sprite *[]byte:pupil-sprite short:x short:y -- ) {
 
 	// Calculate pupil offset
 	{
-		Mouse.y input2 { EYE_HEIGHT 2* div } sub : (my)
+		Mouse.y input2 SCREEN_WIDTH min2 : (my)
+		(my) { EYE_HEIGHT 2* div } sub : (my)
 		swap-r sth-rk (my y) sub
 	} : (oy)
 	{
-		Mouse.x input2 { EYE_WIDTH 2* div } sub : (mx)
+		Mouse.x input2 SCREEN_HEIGHT min2 : (mx)
+		(mx) { EYE_WIDTH 2* div } sub : (mx)
 		swap-r sth-rk (mx x) sub
 	} : (ox)
 
