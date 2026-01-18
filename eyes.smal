@@ -81,7 +81,7 @@ fun draw-eye ( *[]byte:eye-sprite *[]byte:pupil-sprite short:x short:y -- ) {
 	swap (ox oy)
 
 	over over (ox oy) vec-magnitude : (mag)
-	(mag) 4* div 0* 9* clamp : (mag) sth
+	(mag) 4* div 9* min2 : (mag) sth
 
 	(ox oy) vec-normalize : (nx ny)
 	/**/ sth-rk (ny mag) mul 100* sdiv : (ny)
@@ -214,10 +214,6 @@ fun vec-normalize ( short:x short:y -- short:nx short:ny ) {
 	/**/ (y) 100* mul sth-rk (_ mag) sdiv : (ny)
 	swap (x) 100* mul sth-r  (_ mag) sdiv : (nx)
 	swap
-}
-
-fun clamp ( short:value short:min short:max -- short ) {
-	rot (max value) min2 (min _) max2
 }
 
 fun min2 ( short:a short:b -- short ) {
